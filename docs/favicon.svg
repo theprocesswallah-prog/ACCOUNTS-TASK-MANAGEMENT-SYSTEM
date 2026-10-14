@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4169E1" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)" />
+  <!-- Document / Ledger Icon -->
+  <g filter="url(#shadow)">
+    <rect x="14" y="12" width="36" height="40" rx="4" fill="#FFFFFF" fill-opacity="0.95" />
+    <!-- Header bar -->
+    <rect x="18" y="18" width="28" height="4" rx="2" fill="#4169E1" />
+    <!-- Ledger check lines -->
+    <rect x="26" y="27" width="20" height="3" rx="1.5" fill="#64748B" />
+    <rect x="26" y="34" width="20" height="3" rx="1.5" fill="#64748B" />
+    <rect x="26" y="41" width="14" height="3" rx="1.5" fill="#94A3B8" />
+    <!-- Checkmarks / Indicators -->
+    <circle cx="21" cy="28.5" r="2.5" fill="#10B981" />
+    <circle cx="21" cy="35.5" r="2.5" fill="#3B82F6" />
+    <circle cx="21" cy="42.5" r="2.5" fill="#F59E0B" />
+  </g>
+</svg>

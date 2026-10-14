@@ -153,21 +153,43 @@ When GitHub Pages is configured to deploy directly from the `main` branch root f
 
 ### Fix Applied
 1. **Base Path Configured (`vite.config.ts`)**:
-   ```ts
-   base: '/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/'
-   ```
+   `base: '/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/'` ensures all assets are referenced with the repository prefix.
 2. **Production Asset Bundling**:
-   `npm run build` processes `index.html`, transpiles TypeScript, bundles Tailwind CSS, and outputs the production-ready distribution into `dist/` with paths prefixed by `/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/assets/`.
-3. **SPA Routing & Jekyll Bypass**:
+   `npm run build` processes `index.html`, transpiles TypeScript, bundles Tailwind CSS, and outputs production assets into `dist/` with paths prefixed by `/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/assets/`.
+3. **Favicon Assets**:
+   Provided `public/favicon.svg` and `public/favicon.ico` so the browser never experiences a 404 on `favicon.ico`.
+4. **SPA Routing & Jekyll Bypass**:
    Build automatically generates `dist/404.html` (for direct link routing such as `/task-request`) and `dist/.nojekyll`.
-4. **Automated GitHub Actions Deployment**:
+5. **Automated GitHub Actions Deployment**:
    `.github/workflows/deploy.yml` builds and deploys `./dist` to GitHub Pages automatically on push.
 
-### Deployment Procedure
-1. In your GitHub repository, navigate to **Settings** → **Pages**.
-2. Under **Build and deployment** → **Source**, select **GitHub Actions**.
-3. Push your latest code to the `main` branch (or go to the **Actions** tab and click **Run workflow** on "Deploy to GitHub Pages").
-4. Once the action completes (typically ~30–45s), your live application will be published at:
-   `https://theprocesswallah-prog.github.io/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/`
-   and the external department submission form at:
-   `https://theprocesswallah-prog.github.io/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/?portal=submit` (or `#/task-request`).
+### Deployment Method 1: GitHub Actions (Recommended)
+1. Commit all files including `.github/workflows/deploy.yml`, `vite.config.ts`, `index.html`, and `public/`:
+   ```bash
+   git add .
+   git commit -m "Fix GitHub Pages deployment pipeline, base path, and favicon"
+   git push origin main
+   ```
+2. In your GitHub repository:
+   - Navigate to **Settings** → **Pages**.
+   - Under **Build and deployment** → **Source**, change the dropdown from `"Deploy from a branch"` to **"GitHub Actions"**.
+   *(Note: If you leave it set to "Deploy from a branch", GitHub Pages will continue serving the unbuilt root repository files and ignore the workflow!)*
+3. Check the **Actions** tab on GitHub:
+   - You will see the **Deploy to GitHub Pages** workflow running.
+   - Once it completes with a green checkmark, the live website will be updated and functional.
+
+### Deployment Method 2: Deploy from Branch (/docs folder)
+If your repository or organization permissions restrict GitHub Actions:
+1. Run `npm run build:docs` to compile into the `docs/` folder.
+2. In your GitHub repository:
+   - Navigate to **Settings** → **Pages**.
+   - Under **Build and deployment** → **Source**, select **"Deploy from a branch"**.
+   - Select Branch: `main` and Folder: `/docs`.
+   - Click **Save**.
+3. Push the `docs/` directory to GitHub:
+   ```bash
+   npm run build:docs
+   git add docs
+   git commit -m "Build production app into docs/ folder"
+   git push origin main
+   ```
