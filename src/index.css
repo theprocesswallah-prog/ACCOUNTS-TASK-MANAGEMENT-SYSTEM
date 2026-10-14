@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+  --bg-main: #E9EDF3;
+  --surface-raised: #F3F5F9;
+  --text-primary: #202A38;
+  --text-secondary: #667085;
+  --accent-primary: #4169E1;
+  --color-success: #16845B;
+  --color-warning: #D88A16;
+  --color-danger: #D64545;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* Tabular figures for numbers, dates, points */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Premium Neumorphic Surface Utilities */
+.neu-raised {
+  background: #F3F5F9;
+  box-shadow: 6px 6px 14px rgba(166, 175, 195, 0.55), -6px -6px 14px rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.neu-raised-sm {
+  background: #F3F5F9;
+  box-shadow: 3px 3px 7px rgba(166, 175, 195, 0.45), -3px -3px 7px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.neu-raised-lg {
+  background: #F3F5F9;
+  box-shadow: 10px 10px 22px rgba(166, 175, 195, 0.55), -10px -10px 22px rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.neu-inset {
+  background: #E5EBF2;
+  box-shadow: inset 3px 3px 6px rgba(166, 175, 195, 0.55), inset -3px -3px 6px rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(166, 175, 195, 0.25);
+}
+
+.neu-inset-sm {
+  background: #E8EDF4;
+  box-shadow: inset 2px 2px 4px rgba(166, 175, 195, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(166, 175, 195, 0.2);
+}
+
+/* Neumorphic Button Interactive Behaviors */
+.neu-btn {
+  background: #F3F5F9;
+  box-shadow: 4px 4px 10px rgba(166, 175, 195, 0.5), -4px -4px 10px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-btn:hover {
+  box-shadow: 5px 5px 12px rgba(166, 175, 195, 0.6), -5px -5px 12px rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
+}
+
+.neu-btn:active, .neu-btn.active {
+  box-shadow: inset 2px 2px 5px rgba(166, 175, 195, 0.7), inset -2px -2px 5px rgba(255, 255, 255, 0.8);
+  transform: translateY(0);
+}
+
+.neu-btn-primary {
+  background: #4169E1;
+  color: #FFFFFF;
+  box-shadow: 4px 4px 12px rgba(65, 105, 225, 0.4), -3px -3px 8px rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-btn-primary:hover {
+  background: #3658C7;
+  box-shadow: 5px 5px 14px rgba(65, 105, 225, 0.5), -3px -3px 8px rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px);
+}
+
+.neu-btn-primary:active {
+  background: #2D4AA8;
+  box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.3), inset -1px -1px 4px rgba(255, 255, 255, 0.2);
+  transform: translateY(0);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #E9EDF3;
+}
+::-webkit-scrollbar-thumb {
+  background: #CAD2DE;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A6B0C2;
+}

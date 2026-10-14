@@ -1,0 +1,6 @@
+{
+  "name": "Accounts Task Management System",
+  "description": "Industrial accounts department task management system with live office task board, mobile workflows, deadline extension approvals, and Google Sheets integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
