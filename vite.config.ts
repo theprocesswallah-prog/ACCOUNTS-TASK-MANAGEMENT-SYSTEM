@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import fs from 'fs';
-import {defineConfig} from 'vite';
+import {defineConfig, type Plugin} from 'vite';
 
 export default defineConfig(() => {
   return {
@@ -10,31 +10,33 @@ export default defineConfig(() => {
     plugins: [
       react(),
       tailwindcss(),
-      {
-        name: 'github-pages-spa-404',
-        configResolved(config) {
-          (this as { targetOutDir?: string }).targetOutDir = config.build.outDir;
-        },
-        closeBundle() {
-          try {
-            const currentDir = typeof import.meta.dirname !== 'undefined' ? import.meta.dirname : __dirname;
-            const targetDir = (this as { targetOutDir?: string }).targetOutDir || 'dist';
-            const outDir = path.isAbsolute(targetDir) ? targetDir : path.resolve(currentDir, targetDir);
-            const indexPath = path.resolve(outDir, 'index.html');
-            const notFoundPath = path.resolve(outDir, '404.html');
-            if (fs.existsSync(indexPath)) {
-              fs.copyFileSync(indexPath, notFoundPath);
+      ((): Plugin => {
+        let currentOutDir = 'dist';
+        return {
+          name: 'github-pages-spa-404',
+          configResolved(config) {
+            currentOutDir = config.build.outDir || 'dist';
+          },
+          closeBundle() {
+            try {
+              const currentDir = typeof import.meta.dirname !== 'undefined' ? import.meta.dirname : process.cwd();
+              const outDir = path.isAbsolute(currentOutDir) ? currentOutDir : path.resolve(currentDir, currentOutDir);
+              const indexPath = path.resolve(outDir, 'index.html');
+              const notFoundPath = path.resolve(outDir, '404.html');
+              if (fs.existsSync(indexPath)) {
+                fs.copyFileSync(indexPath, notFoundPath);
+              }
+              fs.writeFileSync(path.resolve(outDir, '.nojekyll'), '');
+            } catch (e) {
+              console.warn('Failed to copy 404.html for GitHub Pages:', e);
             }
-            fs.writeFileSync(path.resolve(outDir, '.nojekyll'), '');
-          } catch (e) {
-            console.warn('Failed to copy 404.html for GitHub Pages:', e);
-          }
-        },
-      },
+          },
+        };
+      })(),
     ],
     resolve: {
       alias: {
-        '@': path.resolve(typeof import.meta.dirname !== 'undefined' ? import.meta.dirname : __dirname, '.'),
+        '@': path.resolve(typeof import.meta.dirname !== 'undefined' ? import.meta.dirname : process.cwd(), '.'),
       },
     },
     server: {
