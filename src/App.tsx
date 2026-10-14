@@ -44,19 +44,43 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Check if opened directly via external department URL query param (?portal=submit or ?form=external)
-  const [isStandalonePortal, setIsStandalonePortal] = useState<boolean>(() => {
+  // Check if opened directly via external department URL (/task-request, #/task-request, ?portal=submit)
+  const isExternalUrl = useCallback((): boolean => {
     try {
       const params = new URLSearchParams(window.location.search);
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
       return (
         params.get('portal') === 'submit' ||
+        params.get('portal') === 'external' ||
         params.get('form') === 'external' ||
-        window.location.hash === '#/submit'
+        params.get('tab') === 'task-request' ||
+        path.endsWith('/task-request') ||
+        path.endsWith('/task-request/') ||
+        path.includes('/task-request') ||
+        hash === '#/submit' ||
+        hash === '#/task-request' ||
+        hash === '#task-request'
       );
     } catch (e) {
       return false;
     }
-  });
+  }, []);
+
+  const [isStandalonePortal, setIsStandalonePortal] = useState<boolean>(isExternalUrl);
+
+  // Sync portal mode if URL or hash changes
+  useEffect(() => {
+    const handleUrlChange = () => {
+      setIsStandalonePortal(isExternalUrl());
+    };
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, [isExternalUrl]);
 
   // Modals state
   const [isCreateOpen, setIsCreateOpen] = useState(false);

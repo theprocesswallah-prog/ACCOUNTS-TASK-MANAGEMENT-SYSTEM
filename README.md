@@ -140,3 +140,34 @@ A built-in test suite verifies all deadline and point calculations directly in t
 4. Scenario 11: Completed after approved extended deadline awards 0 points.
 5. Scenario 10 Pending: Extension requested but completed after effective deadline awards 0 points.
 6. Countdown: Identifies Due Soon (< 2 hours) and Overdue status.
+
+---
+
+## 7. GitHub Pages Deployment
+
+### Published Repository URL
+`https://theprocesswallah-prog.github.io/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/`
+
+### Root Cause of Initial 404
+When GitHub Pages is configured to deploy directly from the `main` branch root folder (`/`), it serves the raw development `index.html` which contains `<script type="module" src="/src/main.tsx"></script>`. Because GitHub Pages does not run the Vite bundler at runtime and browsers cannot execute raw TypeScript files, a 404 error occurs.
+
+### Fix Applied
+1. **Base Path Configured (`vite.config.ts`)**:
+   ```ts
+   base: '/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/'
+   ```
+2. **Production Asset Bundling**:
+   `npm run build` processes `index.html`, transpiles TypeScript, bundles Tailwind CSS, and outputs the production-ready distribution into `dist/` with paths prefixed by `/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/assets/`.
+3. **SPA Routing & Jekyll Bypass**:
+   Build automatically generates `dist/404.html` (for direct link routing such as `/task-request`) and `dist/.nojekyll`.
+4. **Automated GitHub Actions Deployment**:
+   `.github/workflows/deploy.yml` builds and deploys `./dist` to GitHub Pages automatically on push.
+
+### Deployment Procedure
+1. In your GitHub repository, navigate to **Settings** → **Pages**.
+2. Under **Build and deployment** → **Source**, select **GitHub Actions**.
+3. Push your latest code to the `main` branch (or go to the **Actions** tab and click **Run workflow** on "Deploy to GitHub Pages").
+4. Once the action completes (typically ~30–45s), your live application will be published at:
+   `https://theprocesswallah-prog.github.io/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/`
+   and the external department submission form at:
+   `https://theprocesswallah-prog.github.io/ACCOUNTS-TASK-MANAGEMENT-SYSTEM/?portal=submit` (or `#/task-request`).
