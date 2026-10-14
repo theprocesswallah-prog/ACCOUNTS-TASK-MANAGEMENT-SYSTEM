@@ -139,4 +139,4 @@ A built-in test suite verifies all deadline and point calculations directly in t
 3. Scenario 10: Completed before approved extended deadline awards 5 points.
 4. Scenario 11: Completed after approved extended deadline awards 0 points.
 5. Scenario 10 Pending: Extension requested but completed after effective deadline awards 0 points.
-6. Countdown: Identifies Due Soon (< 2 hours) and Overdue status..
+6. Countdown: Identifies Due Soon (< 2 hours) and Overdue status.
