@@ -191,21 +191,26 @@ export default function App() {
   // Count incoming tasks awaiting Accounts assignment
   const pendingCount = tasks.filter((t) => t.Status === 'Pending Assignment').length;
 
-  // If URL parameter indicates standalone portal mode (?portal=submit)
+  // CASE A: External Direct Link (/task-request, ?portal=external, ?portal=submit, etc.)
+  // Restricted intake mode: No dashboard buttons, no internal links, no redirection to internal app.
   if (isStandalonePortal) {
     return (
       <ExternalTaskSubmissionForm
+        isInternalOrigin={false}
+      />
+    );
+  }
+
+  // CASE B: Opened from inside the internal Accounts Dashboard (via Dept Portal action)
+  // Internal session: Allows returning to Accounts Dashboard.
+  if (currentTab === 'external-portal') {
+    return (
+      <ExternalTaskSubmissionForm
+        isInternalOrigin={true}
         onBackToDashboard={() => {
-          try {
-            const url = new URL(window.location.href);
-            url.searchParams.delete('portal');
-            url.searchParams.delete('form');
-            window.history.replaceState({}, '', url.pathname);
-          } catch (e) {}
-          setIsStandalonePortal(false);
+          setCurrentTab('live-board');
           refreshData(false);
         }}
-        isStandalone={true}
       />
     );
   }
@@ -291,16 +296,6 @@ export default function App() {
 
         {currentTab === 'reports' && (
           <ReportsView tasks={tasks} />
-        )}
-
-        {currentTab === 'external-portal' && (
-          <ExternalTaskSubmissionForm
-            onBackToDashboard={() => {
-              setCurrentTab('live-board');
-              refreshData(false);
-            }}
-            isStandalone={false}
-          />
         )}
       </main>
 

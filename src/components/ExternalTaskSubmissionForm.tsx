@@ -1,10 +1,20 @@
 /**
  * External Department Task Submission Portal
- * Dedicated intake form for external departments (Sales, Purchase, Store, Production, Dispatch, etc.)
+ * Dedicated intake form for external departments (Sales, Purchase, Store, Production, Dispatch, HR, Quality, etc.)
  * of ALFA INTERCONTINENTAL LIMITED.
  * 
- * Provides an isolated, streamlined submission flow with validation, attachments,
- * instant Task ID generation, and submission receipts.
+ * Simplified, streamlined submission flow with essential fields only:
+ * - Requesting Department
+ * - Your Full Name
+ * - Task Title / Subject
+ * - Detailed Work Description & Instructions for Accounts
+ * - Requested Priority (Normal, High, Urgent)
+ * - Requested Deadline Date & Time (IST)
+ * - Supporting File Attachments (Optional)
+ * 
+ * Strict Navigation Security:
+ * - Case A (External Direct Link): NO dashboard button, NO navigation into internal app.
+ * - Case B (Opened from Internal Accounts Dashboard): Shows "Back to Dashboard" button.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -23,13 +33,10 @@ import {
   UploadCloud,
   ShieldCheck,
   ArrowLeft,
-  Sparkles,
   Info,
-  Phone,
-  Mail,
   User,
-  Hash,
-  Briefcase
+  Briefcase,
+  Plus
 } from 'lucide-react';
 import {
   Priority,
@@ -49,28 +56,57 @@ import {
 
 interface ExternalTaskSubmissionFormProps {
   onBackToDashboard?: () => void;
-  isStandalone?: boolean;
+  isInternalOrigin?: boolean;
 }
+
+// 3 Simplified Priority Tiers for External Departments
+const PRIORITY_TIERS: {
+  id: Priority;
+  label: string;
+  sublabel: string;
+  badge: string;
+  colorClass: string;
+  selectedClass: string;
+}[] = [
+  {
+    id: 'Medium',
+    label: 'Normal',
+    sublabel: 'Standard 24–48h',
+    badge: 'Routine',
+    colorClass: 'text-[#4169E1]',
+    selectedClass: 'neu-raised border-[#4169E1] bg-[#4169E1]/15 text-[#4169E1] font-bold shadow-sm',
+  },
+  {
+    id: 'High',
+    label: 'High',
+    sublabel: 'Same Day (< 8h)',
+    badge: 'Urgent Ops',
+    colorClass: 'text-[#D88A16]',
+    selectedClass: 'neu-raised border-[#D88A16] bg-[#D88A16]/15 text-[#D88A16] font-bold shadow-sm',
+  },
+  {
+    id: 'Urgent',
+    label: 'Urgent',
+    sublabel: 'Immediate (< 4h)',
+    badge: 'Critical',
+    colorClass: 'text-[#C93B2B]',
+    selectedClass: 'neu-raised border-[#C93B2B] bg-[#C93B2B]/15 text-[#C93B2B] font-bold shadow-sm',
+  },
+];
 
 export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProps> = ({
   onBackToDashboard,
-  isStandalone = false,
+  isInternalOrigin = false,
 }) => {
-  // Form State
+  // Essential Form State
   const [department, setDepartment] = useState<ExternalDepartment>('Sales');
   const [requesterName, setRequesterName] = useState('');
-  const [requesterEmail, setRequesterEmail] = useState('');
-  const [requesterContact, setRequesterContact] = useState('');
-  const [referenceNumber, setReferenceNumber] = useState('');
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
-  const [priority, setPriority] = useState<Priority>('Medium');
+  const [priority, setPriority] = useState<Priority>('Medium'); // Maps to 'Normal'
 
-  // Dates in IST
-  const [startDate] = useState(getISTCurrentDateStr());
-  const [startTime] = useState(getISTCurrentTimeStr());
+  // Deadline in IST (defaults to tomorrow at 18:00 IST)
   const [deadlineDate, setDeadlineDate] = useState(() => {
-    // Default to tomorrow in IST
     const today = new Date();
     const tomorrow = new Date(today.getTime() + 24 * 3600000);
     const y = tomorrow.getFullYear();
@@ -91,10 +127,10 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
   const [hasCopiedId, setHasCopiedId] = useState(false);
   const [hasCopiedPortalLink, setHasCopiedPortalLink] = useState(false);
 
-  // Clear errors when user types
+  // Clear errors when user modifies inputs
   useEffect(() => {
     if (errorMessage) setErrorMessage('');
-  }, [department, requesterName, requesterEmail, taskTitle, taskDescription, deadlineDate, deadlineTime]);
+  }, [department, requesterName, taskTitle, taskDescription, deadlineDate, deadlineTime]);
 
   // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +141,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > 15 * 1024 * 1024) {
-        setErrorMessage(`File ${file.name} exceeds the 15MB limit.`);
+        setErrorMessage(`File "${file.name}" exceeds the 15MB limit.`);
         continue;
       }
       try {
@@ -135,17 +171,13 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
     e.preventDefault();
     if (isSubmitting) return;
 
-    // Validation
+    // Strict validation of required fields
     if (!requesterName.trim()) {
       setErrorMessage('Please enter your full name.');
       return;
     }
-    if (!requesterEmail.trim() || !requesterEmail.includes('@')) {
-      setErrorMessage('Please enter a valid corporate email address.');
-      return;
-    }
     if (!taskTitle.trim()) {
-      setErrorMessage('Please provide a descriptive task title.');
+      setErrorMessage('Please provide a descriptive task title / subject.');
       return;
     }
     if (!taskDescription.trim()) {
@@ -156,8 +188,12 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
       setErrorMessage('Please specify the requested completion deadline date.');
       return;
     }
+    if (!deadlineTime) {
+      setErrorMessage('Please specify the requested deadline time.');
+      return;
+    }
 
-    // Deadline validation (must not precede today in IST)
+    // Deadline validation against current IST
     const currentISTDate = getISTCurrentDateStr();
     if (deadlineDate < currentISTDate) {
       setErrorMessage('Deadline date cannot be in the past.');
@@ -174,16 +210,17 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
     setIsSubmitting(true);
     setErrorMessage('');
 
+    // Payload preserves backward compatibility with database schema without requiring removed fields
     const payload: ExternalTaskRequestPayload = {
       Requesting_Department: department,
       Requester_Name: requesterName.trim(),
-      Requester_Email: requesterEmail.trim(),
-      Requester_Contact: requesterContact.trim(),
-      Reference_Number: referenceNumber.trim(),
+      Requester_Email: '',
+      Requester_Contact: '',
+      Reference_Number: '',
       Task_Title: taskTitle.trim(),
       Task_Description: taskDescription.trim(),
       Priority_Requested: priority,
-      Requested_Start_Date: startDate,
+      Requested_Start_Date: getISTCurrentDateStr(),
       Requested_Deadline_Date: deadlineDate,
       Requested_Deadline_Time: deadlineTime,
       Attachment_URLs: attachments,
@@ -203,11 +240,10 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
     }
   };
 
-  // Reset form for another submission
+  // Reset form for submitting another task
   const handleReset = () => {
     setTaskTitle('');
     setTaskDescription('');
-    setReferenceNumber('');
     setAttachments([]);
     setSubmittedTask(null);
     setErrorMessage('');
@@ -221,13 +257,20 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
     setTimeout(() => setHasCopiedId(false), 2500);
   };
 
-  // Copy Portal shareable link
+  // Copy clean external shareable link (without internal origin markers)
   const handleCopyPortalLink = () => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('portal', 'submit');
-    navigator.clipboard.writeText(url.toString());
-    setHasCopiedPortalLink(true);
-    setTimeout(() => setHasCopiedPortalLink(false), 2500);
+    try {
+      const base = window.location.origin + window.location.pathname.replace(/\/task-request\/?$/, '');
+      const url = new URL(base.endsWith('/') ? base : base + '/');
+      url.searchParams.set('portal', 'external');
+      navigator.clipboard.writeText(url.toString());
+      setHasCopiedPortalLink(true);
+      setTimeout(() => setHasCopiedPortalLink(false), 2500);
+    } catch (e) {
+      navigator.clipboard.writeText(window.location.href);
+      setHasCopiedPortalLink(true);
+      setTimeout(() => setHasCopiedPortalLink(false), 2500);
+    }
   };
 
   return (
@@ -252,7 +295,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Header Actions */}
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyPortalLink}
@@ -272,14 +315,15 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
               )}
             </button>
 
-            {onBackToDashboard && (
+            {/* ONLY show Back to Dashboard button when session originated from internal Accounts Dashboard */}
+            {isInternalOrigin && onBackToDashboard && (
               <button
                 onClick={onBackToDashboard}
-                className="neu-btn text-xs font-semibold px-3 py-2 text-[#667085] hover:text-[#202A38] flex items-center gap-1.5 rounded-xl transition-all"
+                className="neu-btn text-xs font-semibold px-3 py-2 text-[#465366] hover:text-[#202A38] flex items-center gap-1.5 rounded-xl transition-all"
                 title="Return to Accounts Dashboard"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Accounts Dashboard</span>
+                <span>Back to Dashboard</span>
               </button>
             )}
           </div>
@@ -292,8 +336,8 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
         <div className="neu-flat p-4 sm:p-5 rounded-2xl mb-6 flex items-start gap-3.5 border-l-4 border-l-[#4169E1]">
           <Info className="w-5 h-5 text-[#4169E1] shrink-0 mt-0.5" />
           <div className="text-xs sm:text-sm text-[#465366] leading-relaxed">
-            <span className="font-bold text-[#202A38]">Welcome to the Accounts Intake Desk. </span>
-            This form is dedicated for all sister departments (Sales, Purchase, Store, Production, Dispatch, HR) to submit actionable accounting tasks, payment releases, GST/tax clearances, ledger reconciliations, or invoice authorisations. Upon submission, a permanent tracking Task ID is generated.
+            <span className="font-bold text-[#202A38]">Accounts Task Intake Desk. </span>
+            This form is dedicated for all sister departments (Sales, Purchase, Store, Production, Dispatch, HR, Quality) to submit task requests to Accounts. Fill out the quick details below to generate an official tracking Task ID.
           </div>
         </div>
 
@@ -311,7 +355,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                 Task Request Submitted Successfully!
               </h2>
               <p className="text-xs sm:text-sm text-[#667085] mt-1.5 font-medium">
-                Your request has been securely recorded into the ALFA central Accounts database and queued for Manager assignment.
+                Your request has been securely recorded into the central Accounts database and queued for Manager assignment.
               </p>
             </div>
 
@@ -356,7 +400,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
             {/* Request Summary Receipt */}
             <div className="neu-raised p-5 sm:p-6 rounded-2xl max-w-2xl mx-auto mb-8 border border-white/60">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#667085] mb-4 pb-2 border-b border-[#CAD2DE]/50">
-                Submission Summary Receipt
+                Submission Summary
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -366,16 +410,9 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                 </div>
 
                 <div>
-                  <span className="text-[#667085] font-medium block">Requester:</span>
-                  <span className="font-bold text-[#202A38] text-sm">{submittedTask.Requester_Name} ({submittedTask.Requester_Email})</span>
+                  <span className="text-[#667085] font-medium block">Requester Name:</span>
+                  <span className="font-bold text-[#202A38] text-sm">{submittedTask.Requester_Name}</span>
                 </div>
-
-                {submittedTask.Reference_Number && (
-                  <div>
-                    <span className="text-[#667085] font-medium block">Reference Number:</span>
-                    <span className="font-bold text-[#202A38] font-mono text-sm">{submittedTask.Reference_Number}</span>
-                  </div>
-                )}
 
                 <div>
                   <span className="text-[#667085] font-medium block">Priority Requested:</span>
@@ -383,13 +420,8 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                     submittedTask.Priority === 'Urgent' ? 'text-[#C93B2B]' :
                     submittedTask.Priority === 'High' ? 'text-[#D88A16]' : 'text-[#4169E1]'
                   }`}>
-                    {submittedTask.Priority}
+                    {submittedTask.Priority === 'Medium' ? 'Normal' : submittedTask.Priority}
                   </span>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <span className="text-[#667085] font-medium block">Task Subject:</span>
-                  <span className="font-bold text-[#202A38] text-sm block mt-0.5">{submittedTask.Task_Title}</span>
                 </div>
 
                 <div>
@@ -399,48 +431,55 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                   </span>
                 </div>
 
-                <div>
-                  <span className="text-[#667085] font-medium block">Attachments:</span>
-                  <span className="font-bold text-[#202A38] text-sm">
-                    {attachments.length} file{attachments.length === 1 ? '' : 's'} uploaded
-                  </span>
+                <div className="sm:col-span-2">
+                  <span className="text-[#667085] font-medium block">Task Subject:</span>
+                  <span className="font-bold text-[#202A38] text-sm block mt-0.5">{submittedTask.Task_Title}</span>
                 </div>
+
+                {attachments.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <span className="text-[#667085] font-medium block">Attachments:</span>
+                    <span className="font-bold text-[#202A38] text-sm">
+                      {attachments.length} file{attachments.length === 1 ? '' : 's'} attached
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions: Case A (External) shows ONLY Submit Another Task; Case B (Internal) also shows Back to Dashboard */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
               <button
                 onClick={handleReset}
-                className="neu-btn-primary w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2"
+                className="neu-btn-primary w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 shadow-md transition-all"
               >
-                <Send className="w-4 h-4" />
-                <span>Submit Another Request</span>
+                <Plus className="w-4 h-4" />
+                <span>Submit Another Task</span>
               </button>
 
-              {onBackToDashboard && (
+              {isInternalOrigin && onBackToDashboard && (
                 <button
                   onClick={onBackToDashboard}
-                  className="neu-btn w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-[#465366] hover:text-[#202A38] flex items-center justify-center gap-2"
+                  className="neu-btn w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-[#465366] hover:text-[#202A38] flex items-center justify-center gap-2 transition-all"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Go to Accounts Board</span>
+                  <span>Back to Dashboard</span>
                 </button>
               )}
             </div>
           </div>
         ) : (
           /* =========================================================================
-              STATE 2: SUBMISSION FORM
+              STATE 2: SIMPLIFIED SUBMISSION FORM
              ========================================================================= */
           <form onSubmit={handleSubmit} className="neu-flat p-6 sm:p-8 rounded-3xl space-y-6">
             <div className="border-b border-[#CAD2DE]/60 pb-4">
               <h2 className="text-lg sm:text-xl font-bold text-[#202A38] flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-[#4169E1]" />
-                <span>Submit New Task to Accounts</span>
+                <span>Submit Task Request to Accounts</span>
               </h2>
               <p className="text-xs text-[#667085] mt-1 font-medium">
-                All fields marked with an asterisk (<span className="text-[#C93B2B]">*</span>) are mandatory.
+                Please complete the required details below (<span className="text-[#C93B2B]">*</span> indicates mandatory).
               </p>
             </div>
 
@@ -454,7 +493,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
               </div>
             )}
 
-            {/* Section 1: Requester Details */}
+            {/* Section 1: Requester Identification */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#667085] flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-[#4169E1]" />
@@ -492,44 +531,9 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Deepak Verma"
+                      placeholder="e.g. Rajesh Sharma"
                       value={requesterName}
                       onChange={(e) => setRequesterName(e.target.value)}
-                      className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Requester Corporate Email */}
-                <div>
-                  <label className="block text-xs font-bold text-[#202A38] mb-1.5">
-                    Corporate Email Address <span className="text-[#C93B2B]">*</span>
-                  </label>
-                  <div className="neu-inset rounded-xl px-3 py-2 flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-[#667085]" />
-                    <input
-                      type="email"
-                      required
-                      placeholder="e.g. deepak.verma@alfa-intercontinental.com"
-                      value={requesterEmail}
-                      onChange={(e) => setRequesterEmail(e.target.value)}
-                      className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Contact / Phone / Intercom */}
-                <div>
-                  <label className="block text-xs font-bold text-[#202A38] mb-1.5">
-                    Phone / Intercom / Extension <span className="text-[10px] text-[#667085] font-normal">(Optional)</span>
-                  </label>
-                  <div className="neu-inset rounded-xl px-3 py-2 flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-[#667085]" />
-                    <input
-                      type="text"
-                      placeholder="e.g. +91 98201 44521 / Ext. 302"
-                      value={requesterContact}
-                      onChange={(e) => setRequesterContact(e.target.value)}
                       className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none"
                     />
                   </div>
@@ -537,46 +541,27 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
               </div>
             </div>
 
-            {/* Section 2: Task Specifications */}
+            {/* Section 2: Task Details */}
             <div className="space-y-4 pt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#667085] flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-[#4169E1]" />
-                <span>2. Task Specifications & Reference</span>
+                <span>2. Task Details</span>
               </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Reference Number */}
-                <div>
-                  <label className="block text-xs font-bold text-[#202A38] mb-1.5">
-                    Reference / PO / SO / Consignment # <span className="text-[10px] text-[#667085] font-normal">(Optional)</span>
-                  </label>
-                  <div className="neu-inset rounded-xl px-3 py-2 flex items-center gap-2">
-                    <Hash className="w-4 h-4 text-[#667085]" />
-                    <input
-                      type="text"
-                      placeholder="e.g. PO-8812, SO-2026-91"
-                      value={referenceNumber}
-                      onChange={(e) => setReferenceNumber(e.target.value)}
-                      className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-mono focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Task Title */}
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-[#202A38] mb-1.5">
-                    Task Title / Subject <span className="text-[#C93B2B]">*</span>
-                  </label>
-                  <div className="neu-inset rounded-xl px-3 py-2">
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Customer Credit Limit Approval & Sales Invoice Generation"
-                      value={taskTitle}
-                      onChange={(e) => setTaskTitle(e.target.value)}
-                      className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none"
-                    />
-                  </div>
+              {/* Task Title */}
+              <div>
+                <label className="block text-xs font-bold text-[#202A38] mb-1.5">
+                  Task Title / Subject <span className="text-[#C93B2B]">*</span>
+                </label>
+                <div className="neu-inset rounded-xl px-3 py-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Sales Invoice Generation & Dispatch Clearance for Pune Consignment"
+                    value={taskTitle}
+                    onChange={(e) => setTaskTitle(e.target.value)}
+                    className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none"
+                  />
                 </div>
               </div>
 
@@ -589,7 +574,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                   <textarea
                     required
                     rows={4}
-                    placeholder="Clearly specify the required action: e.g. 'Clearance required for Dispatch consignment #DISP-9921 to Bajaj Auto Pune plant. Outstanding payment ledger verification needed before releasing tax invoice.'"
+                    placeholder="Provide specific instructions for Accounts: e.g. Customer ledger verification needed for Bajaj Auto PO #8821, verify payment credit before generating e-way bill and releasing delivery challan."
                     value={taskDescription}
                     onChange={(e) => setTaskDescription(e.target.value)}
                     className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none resize-none leading-relaxed"
@@ -598,50 +583,48 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
               </div>
             </div>
 
-            {/* Section 3: Priority & Deadline */}
+            {/* Section 3: Priority & Turnaround */}
             <div className="space-y-4 pt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#667085] flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-[#4169E1]" />
-                <span>3. Priority & Requested Turnaround</span>
+                <span>3. Requested Priority & Turnaround</span>
               </h3>
 
-              {/* Priority Selector */}
+              {/* Priority Selector: Normal, High, Urgent */}
               <div>
                 <label className="block text-xs font-bold text-[#202A38] mb-2">
-                  Requested Priority Level <span className="text-[#C93B2B]">*</span>
+                  Requested Priority <span className="text-[#C93B2B]">*</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {(['Low', 'Medium', 'High', 'Urgent'] as Priority[]).map((p) => {
-                    const isSelected = priority === p;
-                    const colorClasses = 
-                      p === 'Urgent'
-                        ? isSelected ? 'border-[#C93B2B] bg-[#C93B2B]/10 text-[#C93B2B] font-bold shadow-sm' : 'text-[#667085]'
-                        : p === 'High'
-                        ? isSelected ? 'border-[#D88A16] bg-[#D88A16]/10 text-[#D88A16] font-bold shadow-sm' : 'text-[#667085]'
-                        : p === 'Medium'
-                        ? isSelected ? 'border-[#4169E1] bg-[#4169E1]/10 text-[#4169E1] font-bold shadow-sm' : 'text-[#667085]'
-                        : isSelected ? 'border-[#16845B] bg-[#16845B]/10 text-[#16845B] font-bold shadow-sm' : 'text-[#667085]';
-
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {PRIORITY_TIERS.map((tier) => {
+                    const isSelected = priority === tier.id;
                     return (
                       <button
                         type="button"
-                        key={p}
-                        onClick={() => setPriority(p)}
-                        className={`py-2.5 px-3 rounded-xl border text-xs text-center transition-all flex flex-col items-center justify-center gap-1 ${
-                          isSelected ? 'neu-raised' : 'neu-flat hover:bg-white/40 border-[#CAD2DE]/60'
-                        } ${colorClasses}`}
+                        key={tier.id}
+                        onClick={() => setPriority(tier.id)}
+                        className={`py-3 px-4 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                          isSelected
+                            ? tier.selectedClass
+                            : 'neu-flat hover:bg-white/40 border-[#CAD2DE]/60 text-[#667085]'
+                        }`}
                       >
-                        <span className="font-bold text-xs">{p}</span>
-                        <span className="text-[10px] opacity-75">
-                          {p === 'Urgent' ? 'Immediate (< 4h)' : p === 'High' ? 'Same Day' : p === 'Medium' ? 'Standard 24-48h' : 'Routine'}
-                        </span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-sm text-[#202A38]">{tier.label}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            isSelected ? 'bg-white/80 shadow-xs' : 'bg-[#E9EDF3]'
+                          } ${tier.colorClass}`}>
+                            {tier.badge}
+                          </span>
+                        </div>
+                        <span className="text-[11px] opacity-80">{tier.sublabel}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Deadline in IST */}
+              {/* Deadline in IST: Date and Time */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-[#202A38] mb-1.5 flex items-center justify-between">
@@ -679,29 +662,29 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
               </div>
             </div>
 
-            {/* Section 4: Supporting Attachments */}
+            {/* Section 4: Supporting Attachments (Optional) */}
             <div className="space-y-3 pt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#667085] flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Paperclip className="w-3.5 h-3.5 text-[#4169E1]" />
-                  <span>4. Supporting Documents (PDF, Excel, Images)</span>
+                  <span>4. Supporting File Attachments (Optional)</span>
                 </span>
                 <span className="text-[10px] text-[#667085] font-normal">Max 15MB each</span>
               </h3>
 
               {/* Dropzone */}
               <div className="neu-inset rounded-2xl p-4 sm:p-5 text-center border-2 border-dashed border-[#CAD2DE]">
-                <UploadCloud className="w-8 h-8 text-[#4169E1] mx-auto mb-2 opacity-80" />
+                <UploadCloud className="w-7 h-7 text-[#4169E1] mx-auto mb-2 opacity-80" />
                 <p className="text-xs text-[#202A38] font-bold">
                   Drag and drop files here, or click to browse
                 </p>
                 <p className="text-[11px] text-[#667085] mt-0.5">
-                  Attach invoices, purchase orders, delivery challans, or email approvals.
+                  Attach invoices, purchase orders, delivery challans, or approvals (PDF, Excel, Images).
                 </p>
 
                 <label className="inline-block mt-3">
                   <span className="neu-btn px-4 py-2 rounded-xl text-xs font-bold text-[#4169E1] cursor-pointer hover:bg-white/80 transition-all">
-                    Choose Documents
+                    Choose Files
                   </span>
                   <input
                     type="file"
@@ -714,7 +697,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
 
                 {isUploading && (
                   <p className="text-xs font-semibold text-[#4169E1] mt-2 animate-pulse">
-                    Processing attachments...
+                    Uploading files...
                   </p>
                 )}
               </div>
@@ -755,7 +738,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
             <div className="pt-4 border-t border-[#CAD2DE]/60 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-[11px] text-[#667085] flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#16845B]" />
-                <span>Submitted directly to central Google Sheets Accounts database.</span>
+                <span>Transmits directly to ALFA Accounts central database.</span>
               </div>
 
               <button
@@ -766,12 +749,12 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Transmitting Request...</span>
+                    <span>Submitting Task...</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Submit Task to Accounts Desk</span>
+                    <span>Submit Task Request</span>
                   </>
                 )}
               </button>
@@ -782,7 +765,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
 
       {/* Footer */}
       <footer className="mt-auto py-4 text-center border-t border-[#CAD2DE]/40 text-xs text-[#667085]">
-        <span>ALFA INTERCONTINENTAL LIMITED • Accounts Department Operations Portal • Asia/Kolkata (IST)</span>
+        <span>ALFA INTERCONTINENTAL LIMITED • Accounts Task Intake • Asia/Kolkata (IST)</span>
       </footer>
     </div>
   );

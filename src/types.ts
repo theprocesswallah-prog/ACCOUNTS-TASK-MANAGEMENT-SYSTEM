@@ -96,7 +96,7 @@ export interface Task {
 export interface ExternalTaskRequestPayload {
   Requesting_Department: string;
   Requester_Name: string;
-  Requester_Email: string;
+  Requester_Email?: string;
   Requester_Contact?: string;
   Task_Title: string;
   Task_Description: string;
