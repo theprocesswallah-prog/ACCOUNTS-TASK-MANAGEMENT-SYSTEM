@@ -531,7 +531,7 @@ export const ExternalTaskSubmissionForm: React.FC<ExternalTaskSubmissionFormProp
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Rajesh Sharma"
+                      placeholder="e.g. Rahul Verma"
                       value={requesterName}
                       onChange={(e) => setRequesterName(e.target.value)}
                       className="w-full bg-transparent text-xs sm:text-sm text-[#202A38] font-medium focus:outline-none"

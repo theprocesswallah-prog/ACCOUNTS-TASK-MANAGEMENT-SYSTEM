@@ -58,8 +58,9 @@ export const AppsScriptSetupModal: React.FC<AppsScriptSetupModalProps> = ({
     if (!trimmed) {
       setTestResult({
         success: true,
-        message: 'Reverted to Local Demonstration Mode with mock storage.',
+        message: 'Reverted to Official Google Sheets Backend endpoint.',
       });
+      setUrlInput(getAppsScriptUrl());
       setIsTesting(false);
       onConfigChanged();
       return;
@@ -97,11 +98,12 @@ export const AppsScriptSetupModal: React.FC<AppsScriptSetupModalProps> = ({
     setTestSuiteResults(results);
   };
 
-  const handleResetDemoData = () => {
-    if (window.confirm('Reset all demo tasks, extensions, and scorecard to clean initial state?')) {
+  const handleClearCacheAndResync = () => {
+    if (window.confirm('Clear local preferences and resync all data directly from Google Sheets?')) {
       resetLocalData();
+      setUrlInput(getAppsScriptUrl());
       onConfigChanged();
-      setTestResult({ success: true, message: 'Local demo data reseeded successfully.' });
+      setTestResult({ success: true, message: 'Local cache cleared. Fresh data synced from Google Sheets.' });
     }
   };
 
@@ -319,17 +321,17 @@ export const AppsScriptSetupModal: React.FC<AppsScriptSetupModalProps> = ({
             )}
           </div>
 
-          {/* Demo Data Reset */}
+          {/* Google Sheets Cache Clear & Resync */}
           <div className="flex items-center justify-between pt-2 border-t border-[#CAD2DE]/30">
             <span className="text-[11px] text-[#667085]">
-              Want to start fresh with demo data?
+              Need to clear local preferences &amp; resync with Google Sheets?
             </span>
             <button
               type="button"
-              onClick={handleResetDemoData}
-              className="text-xs text-[#D88A16] font-semibold hover:underline"
+              onClick={handleClearCacheAndResync}
+              className="text-xs text-[#4169E1] font-semibold hover:underline"
             >
-              Reset Demo Records
+              Clear Cache &amp; Resync
             </button>
           </div>
         </div>

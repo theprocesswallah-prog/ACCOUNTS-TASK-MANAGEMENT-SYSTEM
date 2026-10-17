@@ -118,7 +118,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     setIsSubmitting(true);
     setActionError('');
     try {
-      const res = await api.completeTask(task.Task_ID, completionNotes.trim(), currentUser);
+      const res = await api.completeTask(task.Task_ID, completionNotes.trim(), [], currentUser);
       if (res.success) {
         setActionSuccess(res.message || 'Task marked as completed!');
         setTimeout(() => {

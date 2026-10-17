@@ -14,7 +14,8 @@ import {
   Plus,
   RefreshCw,
   Settings,
-  UserCheck
+  UserCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { LiveTaskBoard } from './components/LiveTaskBoard';
@@ -43,6 +44,7 @@ export default function App() {
   const [scorecards, setScorecards] = useState<EmployeeScorecard[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Check if opened directly via external department URL (/task-request, #/task-request, ?portal=submit)
   const isExternalUrl = useCallback((): boolean => {
@@ -114,26 +116,34 @@ export default function App() {
   const refreshData = useCallback(async (isSilent = false) => {
     if (!isSilent) setIsLoading(true);
     try {
-      const [allTasks, emps, extList, scList] = await Promise.all([
-        api.getAllTasks(),
-        api.getEmployees(),
-        api.getExtensionRequests(),
-        api.getScorecards(),
-      ]);
+      const data = await api.syncDashboardData();
 
-      setTasks(allTasks);
-      setEmployees(emps);
-      setExtensions(extList);
-      setScorecards(scList);
-      setLastUpdated(new Date());
+      if (data.error) {
+        setConnectionError(data.error);
+      } else {
+        setTasks(data.allTasks);
+        setEmployees(data.employees);
+        setExtensions(data.extensions);
+        setScorecards(data.scorecards);
+        setLastUpdated(new Date());
+        setConnectionError(null);
 
-      // If selectedTask is open, update its reference
-      if (selectedTask) {
-        const updatedSelected = allTasks.find((t) => t.Task_ID === selectedTask.Task_ID);
-        if (updatedSelected) setSelectedTask(updatedSelected);
+        // Sync active user with live employee list from Google Sheets
+        if (data.employees && data.employees.length > 0) {
+          setCurrentUserState((prev) => {
+            const found = data.employees.find((e) => e.Employee_ID === prev.Employee_ID || e.Email === prev.Email);
+            return found || data.employees[0];
+          });
+        }
+
+        // If selectedTask is open, update its reference
+        if (selectedTask) {
+          const updatedSelected = data.allTasks.find((t) => t.Task_ID === selectedTask.Task_ID);
+          if (updatedSelected) setSelectedTask(updatedSelected);
+        }
       }
-    } catch (e) {
-      console.error('Failed to load accounts task data', e);
+    } catch (e: any) {
+      setConnectionError(e.message || 'Unable to connect to Google Sheets backend.');
     } finally {
       if (!isSilent) setIsLoading(false);
     }
@@ -233,6 +243,25 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6">
+        {connectionError && (
+          <div className="mb-6 neu-inset p-4 rounded-2xl border border-[#D64545]/30 bg-[#D64545]/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#D64545]">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D64545] animate-ping shrink-0" />
+              <div>
+                <span className="font-bold block">Google Sheets Backend Connection Issue</span>
+                <span className="text-[11px] text-[#202A38]/80">{connectionError}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => refreshData(false)}
+              className="neu-btn px-3 py-1.5 rounded-xl font-semibold text-[#202A38] bg-white/70 hover:bg-white flex items-center gap-1.5 shrink-0"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry Connection</span>
+            </button>
+          </div>
+        )}
+
         {currentTab === 'live-board' && (
           <LiveTaskBoard
             tasks={tasks}

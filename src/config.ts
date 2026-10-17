@@ -1,14 +1,15 @@
 /**
  * Configuration for Accounts Task Management System
+ * ALFA INTERCONTINENTAL LIMITED
  */
 
-// Default endpoint from environment variable if present
-const ENV_URL = (import.meta as any).env?.VITE_APPS_SCRIPT_URL || '';
+// Permanent official Google Apps Script backend endpoint
+export const OFFICIAL_APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbzixpdkq_ahAqELG47A8cIiFXF5--e2EZtxFjYw8djYmEVYKlZJo8PjcrTREUXjeC4uoA/exec';
 
-// LocalStorage key for user-configured endpoint
+// LocalStorage key for user-configured endpoint override (optional admin feature)
 const STORAGE_ENDPOINT_KEY = 'accounts_task_apps_script_url';
 const STORAGE_USER_KEY = 'accounts_task_active_user_id';
-const STORAGE_DEMO_KEY = 'accounts_task_demo_mode';
 
 export const APP_CONFIG = {
   // Application metadata
@@ -17,48 +18,54 @@ export const APP_CONFIG = {
   DEPARTMENT: 'Accounts & Finance',
   TIMEZONE: 'Asia/Kolkata',
   TIMEZONE_OFFSET_HOURS: 5.5,
-  
+
   // Point system rules
   POINTS_ON_TIME: 5,
   POINTS_APPROVED_EXTENSION: 5,
   POINTS_LATE: 0,
-  
+
   // Refresh intervals
   BOARD_AUTO_REFRESH_INTERVAL_MS: 20000, // 20 seconds
   COUNTDOWN_TICK_INTERVAL_MS: 1000,
-  
+
   // Storage Keys
   STORAGE_ENDPOINT_KEY,
   STORAGE_USER_KEY,
-  STORAGE_DEMO_KEY,
 };
 
 /**
- * Returns currently active Google Apps Script Web App URL
+ * Returns currently active Google Apps Script Web App URL.
+ * Always resolves to the permanent official endpoint, purging any stale/broken URLs from previous sessions.
  */
 export function getAppsScriptUrl(): string {
-  const custom = localStorage.getItem(STORAGE_ENDPOINT_KEY);
-  if (custom && custom.trim().length > 0) {
-    return custom.trim();
+  try {
+    const custom = localStorage.getItem(STORAGE_ENDPOINT_KEY);
+    if (custom && custom !== OFFICIAL_APPS_SCRIPT_URL) {
+      localStorage.removeItem(STORAGE_ENDPOINT_KEY);
+    }
+  } catch (e) {
+    // In restricted/incognito environments where localStorage is blocked
   }
-  return ENV_URL.trim();
+  return OFFICIAL_APPS_SCRIPT_URL;
 }
 
 /**
- * Updates the user-configured Web App URL
+ * Updates the user-configured Web App URL override
  */
 export function setAppsScriptUrl(url: string): void {
-  if (!url || url.trim().length === 0) {
-    localStorage.removeItem(STORAGE_ENDPOINT_KEY);
-  } else {
-    localStorage.setItem(STORAGE_ENDPOINT_KEY, url.trim());
-  }
+  try {
+    if (!url || url.trim().length === 0 || url.trim() === OFFICIAL_APPS_SCRIPT_URL) {
+      localStorage.removeItem(STORAGE_ENDPOINT_KEY);
+    } else {
+      localStorage.setItem(STORAGE_ENDPOINT_KEY, url.trim());
+    }
+  } catch (e) {}
 }
 
 /**
- * Checks if a live Apps Script URL is configured
+ * Checks if a live Apps Script URL is configured.
+ * Always returns true because the official backend endpoint is permanently embedded.
  */
 export function isAppsScriptConfigured(): boolean {
-  const url = getAppsScriptUrl();
-  return url.length > 0 && url.startsWith('http');
+  return true;
 }
